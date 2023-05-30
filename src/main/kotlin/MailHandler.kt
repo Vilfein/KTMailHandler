@@ -48,6 +48,115 @@ class MailHandler(var myAccountEmail:String,var password:String) {
 
     private val Emails = ArrayList<message_to_read>()
 
+    fun GetEmails():ArrayList<message_to_read>{
+        // Nastavení vlastností pro připojení k emailovému serveru
+        var mails = ArrayList<message_to_read>()
+        val properties = Properties()
+        properties["mail.store.protocol"] = "imaps"
+        properties["mail.imaps.host"] = "imap.forpsi.com"
+        properties["mail.imaps.port"] = "993"
+        properties["mail.imaps.ssl.enable"] = "true"
+        properties["mail.imaps.ssl.trust"] = "*"
+        try {
+            // Připojení k emailovému serveru
+            val session: Session = Session.getDefaultInstance(properties)
+            val store: Store = session.getStore("imaps")
+            store.connect("vasek@vasekdoskar.cz", "Q5fVk_fWFf")
+
+            // Získání složky INBOX
+            val folder: Folder = store.getFolder("INBOX")
+            folder.open(Folder.READ_ONLY)
+
+            // Získání pole zpráv
+            val messages: Array<Message> = folder.messages
+
+            // Procházení zpráv
+            for (message in messages) {
+                var obsah = ""
+//            val from = message.getFrom()
+//            val sub = message.getSubject()
+                val content = message.content
+                if (content is String) obsah = content else if (content is Multipart) {
+                    val multipart: Multipart = content
+                    val partCount: Int = multipart.count
+                    for (i in 0 until partCount) {
+                        val part: BodyPart = multipart.getBodyPart(i)
+                        if (part.isMimeType("text/plain")) {
+                            obsah = "Content: " + part.getContent()
+                        }
+                    }
+                }
+                var from = message.from.first().toString()
+                from = if(from.contains("utf-8")) from.substring(from.lastIndexOf('<'),from.length) else from
+                var subj = message.subject.toString()
+
+                mails.add(message_to_read(from,subj,obsah))
+
+            }
+
+            // Uzavření spojení
+            folder.close(false)
+            store.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return mails
+    }
+
+
+    private fun loadMails() {// Nastavení vlastností pro připojení k emailovému serveru
+    val properties = Properties()
+    properties["mail.store.protocol"] = "imaps"
+    properties["mail.imaps.host"] = "imap.forpsi.com"
+    properties["mail.imaps.port"] = "993"
+    properties["mail.imaps.ssl.enable"] = "true"
+    properties["mail.imaps.ssl.trust"] = "*"
+    try {
+        // Připojení k emailovému serveru
+        val session: Session = Session.getDefaultInstance(properties)
+        val store: Store = session.getStore("imaps")
+        store.connect("vasek@vasekdoskar.cz", "Q5fVk_fWFf")
+
+        // Získání složky INBOX
+        val folder: Folder = store.getFolder("INBOX")
+        folder.open(Folder.READ_ONLY)
+
+        // Získání pole zpráv
+        val messages: Array<Message> = folder.messages
+        Emails.clear()
+        // Procházení zpráv
+        for (message in messages) {
+            var obsah = ""
+            val content = message.content
+            if (content is String) obsah = content else if (content is Multipart) {
+                val multipart: Multipart = content
+                val partCount: Int = multipart.count
+                for (i in 0 until partCount) {
+                    val part: BodyPart = multipart.getBodyPart(i)
+                    if (part.isMimeType("text/plain")) {
+                        obsah = "Content: " + part.getContent()
+                    }
+                }
+            }
+            // var from = message.from.get(0).toString()
+            var from = message.from.first().toString()
+            var subj = message.subject.toString()
+
+            Emails.add(message_to_read(from,subj,obsah))
+
+        }
+
+        // Uzavření spojení
+        folder.close(false)
+        store.close()
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+
+    }
+
+
     fun ReadMails(){
         // Nastavení vlastností pro připojení k emailovému serveru
         val properties = Properties()
@@ -88,8 +197,9 @@ class MailHandler(var myAccountEmail:String,var password:String) {
                // var from = message.from.get(0).toString()
                 var from = message.from.first().toString()
                 var subj = message.subject.toString()
+                var body = if(obsah.contains("utf-8")) obsah.substring(obsah.lastIndexOf('<'),obsah.length) else obsah
 
-                Emails.add(message_to_read(from,subj,obsah))
+                Emails.add(message_to_read(from,subj,body))
 
                 System.out.println("From: " + from)
                 System.out.println("Subject: " + subj)
@@ -111,8 +221,11 @@ class MailHandler(var myAccountEmail:String,var password:String) {
      internal class message_to_send(var body:String, var subject:String){
 
     }
-    internal class message_to_read(var from:String, var subject:String, var body:String){
+     class message_to_read(var from:String, var subject:String, var body:String){
 
+         override fun toString(): String {
+             return "from: $from\nsubject: $subject\nbody: $body"
+         }
     }
 
 }
