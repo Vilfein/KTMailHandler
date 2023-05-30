@@ -4,6 +4,7 @@ import java.util.*
 import javax.mail.*
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
+import kotlin.collections.ArrayList
 
 class MailHandler(var myAccountEmail:String,var password:String) {
 
@@ -45,6 +46,8 @@ class MailHandler(var myAccountEmail:String,var password:String) {
     }
 
 
+    private val Emails = ArrayList<message_to_read>()
+
     fun ReadMails(){
         // Nastavení vlastností pro připojení k emailovému serveru
         val properties = Properties()
@@ -65,16 +68,16 @@ class MailHandler(var myAccountEmail:String,var password:String) {
 
             // Získání pole zpráv
             val messages: Array<Message> = folder.messages
-
+            Emails.clear()
             // Procházení zpráv
             for (message in messages) {
                 var obsah = ""
 //            val from = message.getFrom()
 //            val sub = message.getSubject()
-                val content = message.getContent()
+                val content = message.content
                 if (content is String) obsah = content else if (content is Multipart) {
                     val multipart: Multipart = content
-                    val partCount: Int = multipart.getCount()
+                    val partCount: Int = multipart.count
                     for (i in 0 until partCount) {
                         val part: BodyPart = multipart.getBodyPart(i)
                         if (part.isMimeType("text/plain")) {
@@ -82,8 +85,14 @@ class MailHandler(var myAccountEmail:String,var password:String) {
                         }
                     }
                 }
-                System.out.println("From: " + message.getFrom().get(0))
-                System.out.println("Subject: " + message.getSubject())
+               // var from = message.from.get(0).toString()
+                var from = message.from.first().toString()
+                var subj = message.subject.toString()
+
+                Emails.add(message_to_read(from,subj,obsah))
+
+                System.out.println("From: " + from)
+                System.out.println("Subject: " + subj)
                 println("Content: $obsah")
                 println("--------------------------")
             }
@@ -102,7 +111,7 @@ class MailHandler(var myAccountEmail:String,var password:String) {
      internal class message_to_send(var body:String, var subject:String){
 
     }
-    internal class message_to_read(var from:String, var subject:String, var body:Message){
+    internal class message_to_read(var from:String, var subject:String, var body:String){
 
     }
 
