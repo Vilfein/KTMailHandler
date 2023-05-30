@@ -15,6 +15,12 @@ class MailHandler(var myAccountEmail:String,var password:String) {
         properties["mail.imaps.port"] =  "993"
         properties["mail.imaps.ssl.enable"] = "true"
         properties["mail.imaps.ssl.trust"] = "*"
+
+        properties["mail.smtp.auth"] = "true"
+        // properties.put("mail.smtp.starttls.enable","true");//pro google?
+        properties["mail.smtp.host"] = "smtp.forpsi.com"
+        properties["mail.smtp.port"] = "587"
+
     }
 
     //var myAccountEmail = "postmaster@vasekdoskar.cz"
@@ -23,7 +29,7 @@ class MailHandler(var myAccountEmail:String,var password:String) {
 
     fun sendMail(recepient: String, subject:String,body:String) {
         println("odesílám zprávu")
-        val properties = Properties()
+        //val properties = Properties()
         properties["mail.smtp.auth"] = "true"
         // properties.put("mail.smtp.starttls.enable","true");//pro google?
         properties["mail.smtp.host"] = "smtp.forpsi.com"
@@ -34,7 +40,7 @@ class MailHandler(var myAccountEmail:String,var password:String) {
                 return PasswordAuthentication(myAccountEmail,password)
             }
         })
-        val message: Message? = prepareMessage(session, myAccountEmail, recepient, message_to_send(body,subject))
+        val message: Message? = prepareMessage(session, myAccountEmail, recepient, msg_to_send(body,subject))
         Transport.send(message)
         println("MSG odeslána")
     }
@@ -47,7 +53,14 @@ class MailHandler(var myAccountEmail:String,var password:String) {
         properties["mail.imaps.ssl.trust"] = "*"
     }
 
-    private fun prepareMessage(session: Session, myAccountEmail: String, recepient: String, msg:message_to_send): Message? {
+    fun SenderSettings(host:String,port:Int){
+        properties["mail.smtp.auth"] = "true"
+        // properties.put("mail.smtp.starttls.enable","true");//pro google?
+        properties["mail.smtp.host"] = host//"smtp.forpsi.com"
+        properties["mail.smtp.port"] = port.toString()//"587"
+    }
+
+    private fun prepareMessage(session: Session, myAccountEmail: String, recepient: String, msg:msg_to_send): Message? {
         try {
             val message: Message = MimeMessage(session)
             message.setFrom(InternetAddress(myAccountEmail))
@@ -63,11 +76,9 @@ class MailHandler(var myAccountEmail:String,var password:String) {
     }
 
 
-    private val Emails = ArrayList<message_to_read>()
-
-    fun GetEmails():ArrayList<message_to_read>{
+    fun GetEmails():ArrayList<msg_to_read>{
         // Nastavení vlastností pro připojení k emailovému serveru
-        var mails = ArrayList<message_to_read>()
+        val mails = ArrayList<msg_to_read>()
         val properties = Properties()
         properties["mail.store.protocol"] = "imaps"
         properties["mail.imaps.host"] = "imap.forpsi.com"
@@ -105,7 +116,7 @@ class MailHandler(var myAccountEmail:String,var password:String) {
                 from = if(from.contains("utf-8")) from.substring(from.lastIndexOf('<'),from.length) else from
                 var subj = message.subject.toString()
 
-                mails.add(message_to_read(from,subj,obsah))
+                mails.add(msg_to_read(from,subj,obsah))
 
             }
 
@@ -117,10 +128,10 @@ class MailHandler(var myAccountEmail:String,var password:String) {
         }
         return mails
     }
-     internal class message_to_send(var body:String, var subject:String){
+     internal class msg_to_send(var body:String, var subject:String){
 
     }
-     class message_to_read(var from:String, var subject:String, var body:String){
+     class msg_to_read(var from:String, var subject:String, var body:String){
 
          override fun toString(): String {
              return "from: $from\nsubject: $subject\nbody: $body"
