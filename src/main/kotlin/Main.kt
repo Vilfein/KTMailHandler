@@ -1,5 +1,5 @@
 fun main(args: Array<String>) {
-    val sender = MailHandler("postmaster@vasekdoskar.cz","x9VVS2cC-V")
+    val sender = MailHandler("vasek@vasekdoskar.cz","Q5fVk_fWFf")
 
     var emaily = sender.GetEmails()
 
