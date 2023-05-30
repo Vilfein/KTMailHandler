@@ -1,5 +1,3 @@
-
-
 import java.util.*
 import javax.mail.*
 import javax.mail.internet.InternetAddress
@@ -7,7 +5,7 @@ import javax.mail.internet.MimeMessage
 import kotlin.collections.ArrayList
 
 class MailHandler(var myAccountEmail:String,var password:String) {
-    private  val properties = Properties()
+    private val properties = Properties()
 
     init{
         properties["mail.store.protocol"] = "imaps"
@@ -79,12 +77,7 @@ class MailHandler(var myAccountEmail:String,var password:String) {
     fun GetEmails():ArrayList<msg_to_read>{
         // Nastavení vlastností pro připojení k emailovému serveru
         val mails = ArrayList<msg_to_read>()
-        val properties = Properties()
-        properties["mail.store.protocol"] = "imaps"
-        properties["mail.imaps.host"] = "imap.forpsi.com"
-        properties["mail.imaps.port"] = "993"
-        properties["mail.imaps.ssl.enable"] = "true"
-        properties["mail.imaps.ssl.trust"] = "*"
+
         try {
             // Připojení k emailovému serveru
             val session: Session = Session.getDefaultInstance(properties)
@@ -93,39 +86,40 @@ class MailHandler(var myAccountEmail:String,var password:String) {
 
             // Získání složky INBOX
             val folder: Folder = store.getFolder("INBOX")
-            folder.open(Folder.READ_WRITE)
+            folder.use {
+                it.open(Folder.READ_WRITE)
 
-            // Získání pole zpráv
-            val messages: Array<Message> = folder.messages
+                // Získání pole zpráv
+                val messages: Array<Message> = it.messages
 
-            // Procházení zpráv
-            for (message in messages) {
-                var obsah = ""
-                val content = message.content
-                if (content is String) obsah = content else if (content is Multipart) {
-                    val multipart: Multipart = content
-                    val partCount: Int = multipart.count
-                    for (i in 0 until partCount) {
-                        val part: BodyPart = multipart.getBodyPart(i)
-                        if (part.isMimeType("text/plain")) {
-                            obsah = "Content: " + part.getContent()
+                // Procházení zpráv
+                for (message in messages) {
+                    var obsah = ""
+                    val content = message.content
+                    if (content is String) obsah = content else if (content is Multipart) {
+                        val multipart: Multipart = content
+                        val partCount: Int = multipart.count
+                        for (i in 0 until partCount) {
+                            val part: BodyPart = multipart.getBodyPart(i)
+                            if (part.isMimeType("text/plain")) {
+                                obsah = "Content: " + part.content.toString()
+                            }
                         }
                     }
+                    var from = message.from.first().toString()
+                    from = if(from.contains("utf-8")) from.substring(from.lastIndexOf('<'),from.length) else from
+                    var subj = message.subject.toString()
+
+                    mails.add(msg_to_read(from,subj,obsah))
                 }
-                var from = message.from.first().toString()
-                from = if(from.contains("utf-8")) from.substring(from.lastIndexOf('<'),from.length) else from
-                var subj = message.subject.toString()
-
-                mails.add(msg_to_read(from,subj,obsah))
-
             }
 
             // Uzavření spojení
-            folder.close(false)
             store.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
         return mails
     }
      internal class msg_to_send(var body:String, var subject:String){

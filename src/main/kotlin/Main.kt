@@ -2,6 +2,7 @@ fun main(args: Array<String>) {
     val sender = MailHandler("vasek@vasekdoskar.cz","Q5fVk_fWFf")
 
     sender.sendMail("doskar.vaclav@seznam.cz","pokus","Ahoj Vilfeinku")
+    print("Odentruj")
     var x = readln()
     print("čtu")
 
